@@ -8,9 +8,10 @@ class neuralnet:
         self.activation_fn = activation_fn
         self.cost_fn = cost_fn
         self.layers = []
+        self.error = 0
 
         for i in range(self.num_layers):
-            # i = input dim, i+1 = output dim
+            # i: input dim, i+1: output dim
             if i == self.num_layers - 1:
                 layer_i = layer(nodes_per_layer[i], 0, activation_fn[i])
             else:
@@ -21,10 +22,11 @@ class neuralnet:
     def forward_pass(self, inputs):
         self.layers[0].activations = inputs
         for i in range(self.num_layers-1):
+            # input_products are the elementwise matrix product and summation of the previous node outputs and weights
             input_products = np.add(np.matmul(self.layers[i].activations, self.layers[i].weights), self.layers[i].bias)
-            if self.activation_fn == "sigmoid":
+            if self.layers[i].activation_fn == "sigmoid":
                 self.layers[i+1].activations=self.sigmoid(input_products)
-            elif self.activation_fn == "relu":
+            elif self.layers[i].avtivation_fn == "relu":
                 self.layers[i+1].activations=self.relu(input_products)
             else:
                 self.layers[i+1].activations = input_products
@@ -38,6 +40,20 @@ class neuralnet:
             layer[i] = max(0, layer[i])
         return layer
 
+    def loss_fn(self,labels):
+        if len(labels[0]) != len(self.layers[self.num_layers - 1].nodes_output):
+            print("Error, wrong label shape")
+            return
+        self.error = self.cross_entropy(labels)
+
+    def cross_entropy(self, labels):
+        out_layer_activations = self.layers[self.num_layers-1].activations
+        self.error += -np.sum(np.multiply(labels, np.log(out_layer_activations)) + np.multiply((np.subtract(1, labels)), np.log(out_layer_activations)))
+
+
+
+
+
 class layer:
     def __init__(self, nodes_input, nodes_output, activation_fn):
         self.nodes_input = nodes_input
@@ -46,13 +62,19 @@ class layer:
         self.activations = np.zeros([nodes_input,1])
 
         if nodes_output != 0:
+            # Weight matrix dimensions are a combination of the input and output nodes
+            # Bias is just applied to the outputting nodes
             self.weights = np.random.normal(0, 0.001, size=(nodes_input, nodes_output))
             self.bias = np.random.normal(0, 0.001, size=(1, nodes_output))
         else:
             self.weights = None
             self.bias = None
 
-inputs = [0]
-network = neuralnet([1,2,1], [None, None, None], cost_fn="cross_entropy")
+inputs = [1,2]
+network = neuralnet([2,2,1], ["sigmoid", "sigmoid", "sigmoid"], cost_fn="cross_entropy")
 network.forward_pass(inputs)
-print(network.layers[2].activations)
+network.cross_entropy([1])
+network.cross_entropy([0])
+
+print(network.error)
+

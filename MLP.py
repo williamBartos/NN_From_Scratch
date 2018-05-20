@@ -23,14 +23,15 @@ class neuralnet:
         self.layers[0].activations = inputs
         for i in range(self.num_layers-1):
             # input_products are the elementwise matrix product and summation of the previous node outputs and weights
+            # We iterate to the i-1th layer because the final/output layer is just the activations of the last hidden layer
+            # Passed through the putput layer's activation function
             input_products = np.add(np.matmul(self.layers[i].activations, self.layers[i].weights), self.layers[i].bias)
-            if self.layers[i].activation_fn == "sigmoid":
+            if self.layers[i+1].activation_fn == "sigmoid":
                 self.layers[i+1].activations=self.sigmoid(input_products)
-            elif self.layers[i].avtivation_fn == "relu":
+            elif self.layers[i+1].avtivation_fn == "relu":
                 self.layers[i+1].activations=self.relu(input_products)
             else:
                 self.layers[i+1].activations = input_products
-
 
     def sigmoid(self, layer):
         return np.divide(1, np.exp(np.negative(layer)))
@@ -71,7 +72,7 @@ class layer:
             self.bias = None
 
 inputs = [1,2]
-network = neuralnet([2,2,1], ["sigmoid", "sigmoid", "sigmoid"], cost_fn="cross_entropy")
+network = neuralnet([2,2,1], [None, "sigmoid", "sigmoid"], cost_fn="cross_entropy")
 network.forward_pass(inputs)
 network.cross_entropy([1])
 network.cross_entropy([0])
